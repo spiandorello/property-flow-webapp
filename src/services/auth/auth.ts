@@ -1,3 +1,7 @@
+'use server'
+
+import { cookies } from 'next/headers'
+
 import { initializeApp } from 'firebase/app'
 import {
   getAuth,
@@ -5,6 +9,13 @@ import {
   type Auth,
   type UserCredential,
 } from 'firebase/auth'
+
+import { ServiceError } from '@/exceptions'
+import { Credentials } from '@/store/auth/auth'
+import {
+  AUTH_EXCEPTION_MESSAGES,
+  AUTH_EXCEPTION_UNKNOWN,
+} from '@/exceptions/types'
 
 type SignInParams = {
   email: string
@@ -23,14 +34,47 @@ const firebaseConfig = {
 
 initializeApp(firebaseConfig)
 
-export async function signIn({ email, password }: SignInParams) {
-  const auth: Auth = getAuth()
+export async function signIn({
+  email,
+  password,
+}: SignInParams): Promise<Credentials> {
+  return new Promise((resolve, reject): void => {
+    const auth: Auth = getAuth()
 
-  const credentials: UserCredential = await signInWithEmailAndPassword(
-    auth,
-    email,
-    password,
-  )
+    async function onSuccess({ user }: UserCredential) {
+      const cookiesStore = await cookies()
+      cookiesStore.set(
+        'auth',
+        JSON.stringify({
+          accessToken: await user.getIdToken(),
+          refreshToken: user.refreshToken,
+        }),
+        {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+        },
+      )
 
-  console.log(credentials)
+      resolve({
+        accessToken: await user.getIdToken(),
+        refreshToken: user.refreshToken,
+      })
+    }
+
+    function onFail(exception: { code?: string }): void {
+      const { code = AUTH_EXCEPTION_UNKNOWN } = exception
+
+      reject(
+        new ServiceError(AUTH_EXCEPTION_MESSAGES?.[code], {
+          code,
+          cause: exception,
+        }),
+      )
+    }
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then(onSuccess)
+      .catch(onFail)
+  })
 }
