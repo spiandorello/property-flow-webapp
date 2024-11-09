@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -25,6 +26,7 @@ const formSchema = z.object({
 })
 
 export default function Login() {
+  const { push } = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,7 +36,10 @@ export default function Login() {
   })
 
   async function onSubmit({ email, password }: z.infer<typeof formSchema>) {
-    await signIn({ email, password })
+    try {
+      await signIn({ email, password })
+      push('/dashboard')
+    } catch {}
   }
 
   return (

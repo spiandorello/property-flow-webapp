@@ -11,7 +11,6 @@ import {
 } from 'firebase/auth'
 
 import { ServiceError } from '@/exceptions'
-import { Credentials } from '@/store/auth/auth'
 import {
   AUTH_EXCEPTION_MESSAGES,
   AUTH_EXCEPTION_UNKNOWN,
@@ -34,32 +33,24 @@ const firebaseConfig = {
 
 initializeApp(firebaseConfig)
 
-export async function signIn({
-  email,
-  password,
-}: SignInParams): Promise<Credentials> {
+export async function signIn({ email, password }: SignInParams): Promise<void> {
   return new Promise((resolve, reject): void => {
     const auth: Auth = getAuth()
 
     async function onSuccess({ user }: UserCredential) {
       const cookiesStore = await cookies()
-      cookiesStore.set(
-        'auth',
-        JSON.stringify({
-          accessToken: await user.getIdToken(),
-          refreshToken: user.refreshToken,
-        }),
-        {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'lax',
-        },
-      )
-
-      resolve({
-        accessToken: await user.getIdToken(),
-        refreshToken: user.refreshToken,
+      cookiesStore.set('PFW_AT', await user?.getIdToken(), {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
       })
+      cookiesStore.set('PFW_RT', user.refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+      })
+
+      resolve()
     }
 
     function onFail(exception: { code?: string }): void {
