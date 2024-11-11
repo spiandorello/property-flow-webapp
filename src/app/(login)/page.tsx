@@ -19,6 +19,7 @@ import {
 
 import { Container } from './_styles'
 import { signIn } from '@/services/auth/auth'
+import { useAuthStore } from '@/store/auth/auth'
 
 const formSchema = z.object({
   email: z.string().email().min(5),
@@ -27,6 +28,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const { push } = useRouter()
+  const { setCredentials } = useAuthStore()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,7 +39,15 @@ export default function Login() {
 
   async function onSubmit({ email, password }: z.infer<typeof formSchema>) {
     try {
-      await signIn({ email, password })
+      const { accessToken, refreshToken } = await signIn({ email, password })
+      setCredentials({ accessToken, refreshToken })
+
+      await fetch('/api/auth/setCookies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken, refreshToken }),
+      })
+
       push('/dashboard')
     } catch {}
   }

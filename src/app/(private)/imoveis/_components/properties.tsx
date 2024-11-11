@@ -10,14 +10,12 @@ import {
 } from '@/components/ui/table'
 import { useAppBar } from '@/store/appBar/appBar'
 import { useEffect } from 'react'
-import { useListProperties } from '@/hooks/queries/proprieties/useProperties'
 
 export function Properties() {
-  const { data } = useListProperties({})
   const { setActions, setTitle } = useAppBar()
 
   useEffect(() => {
-    setTitle('Propriedades')
+    setTitle('Imovéis')
     setActions([
       {
         icon: 'plus',
@@ -26,8 +24,6 @@ export function Properties() {
       },
     ])
   }, [setActions, setTitle])
-
-  console.log(data)
 
   return (
     <div className="mt-4 px-4">

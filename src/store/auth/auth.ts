@@ -24,7 +24,7 @@ export const AUTH_INITIAL_STATE: Omit<
 export const AUTH_STORE_NAME = 'auth'
 export const name = AUTH_STORE_NAME
 
-export const useAuth = create<AuthState>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       ...AUTH_INITIAL_STATE,

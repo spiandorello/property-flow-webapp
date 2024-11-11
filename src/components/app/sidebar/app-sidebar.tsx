@@ -19,8 +19,8 @@ const items = [
     icon: Home,
   },
   {
-    title: 'Propriedades',
-    url: '/dashboard/propriedades',
+    title: 'Imovéis',
+    url: '/imoveis',
     icon: Hotel,
   },
 ]

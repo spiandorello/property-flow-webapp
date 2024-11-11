@@ -1,18 +1,16 @@
 'use server'
-import axios, { AxiosInstance } from 'axios'
 import { cookies } from 'next/headers'
+import axios from 'axios'
 
-export const instance: AxiosInstance = axios.create({
+export const httpClient = axios.create({
   baseURL: 'http://localhost:8081',
   timeout: 1000,
 })
 
-instance.interceptors.request.use(
+httpClient.interceptors.request.use(
   async (config) => {
     const cookiesStore = await cookies()
     const token = cookiesStore.get('PFW_AT')
-
-    console.log(token)
 
     if (token) {
       config.headers.set('X-AUTH-TOKEN', token.value)
@@ -21,12 +19,11 @@ instance.interceptors.request.use(
     return config
   },
   (error) => {
-    console.log('ma oi')
     return Promise.reject(error)
   },
 )
 
-instance.interceptors.response.use(
+httpClient.interceptors.response.use(
   (response) => {
     // Can be modified response
     return response

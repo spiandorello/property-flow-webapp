@@ -1,13 +1,11 @@
-'use server'
-
-import { cookies } from 'next/headers'
-
-import { initializeApp } from 'firebase/app'
+'use client'
+import { initializeApp, getApps, getApp } from 'firebase/app'
 import {
   getAuth,
   signInWithEmailAndPassword,
-  type Auth,
+  onAuthStateChanged,
   type UserCredential,
+  User,
 } from 'firebase/auth'
 
 import { ErrCause, ServiceError } from '@/exceptions'
@@ -15,6 +13,7 @@ import {
   AUTH_EXCEPTION_MESSAGES,
   AUTH_EXCEPTION_UNKNOWN,
 } from '@/exceptions/types'
+import { Credentials } from '@/store/auth/auth'
 
 type SignInParams = {
   email: string
@@ -31,26 +30,19 @@ const firebaseConfig = {
   measurementId: 'G-WZFRCSLQ8S',
 }
 
-initializeApp(firebaseConfig)
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
+export const auth = getAuth(app)
 
-export async function signIn({ email, password }: SignInParams): Promise<void> {
+export async function signIn({
+  email,
+  password,
+}: SignInParams): Promise<Credentials> {
   return new Promise((resolve, reject): void => {
-    const auth: Auth = getAuth()
-
     async function onSuccess({ user }: UserCredential) {
-      const cookiesStore = await cookies()
-      cookiesStore.set('PFW_AT', await user?.getIdToken(), {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+      resolve({
+        accessToken: await user.getIdToken(),
+        refreshToken: user.refreshToken,
       })
-      cookiesStore.set('PFW_RT', user.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-      })
-
-      resolve()
     }
 
     function onFail(exception: { code?: string }): void {
@@ -68,4 +60,35 @@ export async function signIn({ email, password }: SignInParams): Promise<void> {
       .then(onSuccess)
       .catch(onFail)
   })
+}
+
+export async function onAuthChange(
+  credentials: Credentials,
+  callback: (credential: Credentials) => void,
+): Promise<void> {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // const accessToken = await user.getIdTokenResult()
+      //
+      // console.log(credentials.accessToken === accessToken.token)
+      // console.log(credentials.accessToken === accessToken)
+      // if (credentials.accessToken === accessToken) {
+      //   return
+      // }
+      //
+      const refreshToken = await refresh(user)
+      callback({ accessToken: refreshToken, refreshToken: user.refreshToken })
+    }
+  })
+}
+
+async function refresh(user: User): Promise<string> {
+  try {
+    const newIdToken = await user.getIdToken(true) // `true` forces token refresh
+
+    return newIdToken
+  } catch (error) {
+    console.error('Failed to refresh token:', error)
+    throw error
+  }
 }

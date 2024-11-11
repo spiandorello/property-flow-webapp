@@ -1,5 +1,5 @@
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query'
-import { services } from '@/services/properties/service'
+import { getProperties } from '@/services/properties/service'
 
 export type Properties = {
   id: string
@@ -24,11 +24,9 @@ export const useListProperties = (
     QueryKey
   >,
 ) => {
-  const service = services()
-
   return useQuery<ListPropertiesResponse>({
     queryKey: [propertiesKey, params],
-    queryFn: () => service.getProperties(),
+    queryFn: getProperties,
     ...options,
   })
 }
