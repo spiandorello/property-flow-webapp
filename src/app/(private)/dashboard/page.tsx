@@ -14,7 +14,7 @@ export default function Page() {
   useEffect(() => {
     setTitle('Dashboard')
     setActions([])
-  }, [])
+  }, [setActions, setTitle])
 
   return <div>maoi</div>
 }
