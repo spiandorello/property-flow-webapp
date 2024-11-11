@@ -1,12 +1,5 @@
 import type { Metadata } from 'next'
-import { services } from '@/services/properties/service'
 import { Properties } from '@/app/(private)/dashboard/propriedades/_components/properties'
-
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from '@tanstack/react-query'
 
 export const metadata: Metadata = {
   title: 'Propriedades',
@@ -14,21 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  return <PropertiesServerComponent />
-}
-
-export async function PropertiesServerComponent() {
-  const service = services()
-
-  const queryClient = new QueryClient()
-  await queryClient.prefetchQuery({
-    queryKey: ['properties'],
-    queryFn: service.getProperties,
-  })
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <Properties />
-    </HydrationBoundary>
-  )
+  return <Properties />
 }

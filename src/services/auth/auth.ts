@@ -10,7 +10,7 @@ import {
   type UserCredential,
 } from 'firebase/auth'
 
-import { ServiceError } from '@/exceptions'
+import { ErrCause, ServiceError } from '@/exceptions'
 import {
   AUTH_EXCEPTION_MESSAGES,
   AUTH_EXCEPTION_UNKNOWN,
@@ -54,7 +54,7 @@ export async function signIn({ email, password }: SignInParams): Promise<void> {
     }
 
     function onFail(exception: { code?: string }): void {
-      const { code = AUTH_EXCEPTION_UNKNOWN } = exception
+      const { code = AUTH_EXCEPTION_UNKNOWN } = exception as ErrCause
 
       reject(
         new ServiceError(AUTH_EXCEPTION_MESSAGES?.[code], {

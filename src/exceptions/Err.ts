@@ -1,5 +1,16 @@
+export type ErrCause = {
+  code?: string
+  cause?: string
+}
+
 export class Err extends Error {
-  constructor(message, options) {
+  code: string
+  cause: ErrCause
+
+  constructor(
+    message: string,
+    options: { code?: string; cause?: ErrCause } = {},
+  ) {
     super(message ?? 'Unspecified exception.', options)
 
     this.name = 'Err'
