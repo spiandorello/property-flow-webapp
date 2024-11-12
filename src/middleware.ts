@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 
 export const config = {}
 
-const protectedRoutes = ['/dashboard', '/imoveis']
+const protectedRoutes = ['/dashboard', '/imoveis', '/imoveis/*']
 const publicRoutes = ['/login', '/signup', '/']
 
 export async function middleware(req: NextRequest) {
