@@ -3,15 +3,19 @@
 import {
   Table,
   TableBody,
-  // TableCell,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
 import { useAppBar } from '@/store/appBar/appBar'
 import { useEffect } from 'react'
+import { useListProperties } from '@/hooks/queries/proprieties/useProperties'
+import { useRouter } from 'next/navigation'
 
 export function Properties() {
+  const { data } = useListProperties()
+  const router = useRouter()
   const { setActions, setTitle } = useAppBar()
 
   useEffect(() => {
@@ -19,34 +23,34 @@ export function Properties() {
     setActions([
       {
         icon: 'plus',
-        label: 'Adicionar',
-        onClick: () => alert('Adicionar'),
+        label: 'Novo',
+        onClick: () => router.push('/imoveis/cadastrar'),
       },
     ])
   }, [setActions, setTitle])
+
+  console.log(data)
 
   return (
     <div className="mt-4 px-4">
       <Table className="mt-8">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">Invoice</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead className="w-[100px]">Código</TableHead>
+            <TableHead>Tipo</TableHead>
+            <TableHead>Endereço</TableHead>
+            <TableHead className="w-[100px] text-right">Ano</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* {[].map((invoice) => ( */}
-          {/*  <TableRow key={invoice.invoice}> */}
-          {/*    <TableCell className="font-medium">{invoice.invoice}</TableCell> */}
-          {/*    <TableCell>{invoice.paymentStatus}</TableCell> */}
-          {/*    <TableCell>{invoice.paymentMethod}</TableCell> */}
-          {/*    <TableCell className="text-right"> */}
-          {/*      {invoice.totalAmount} */}
-          {/*    </TableCell> */}
-          {/*  </TableRow> */}
-          {/* ))} */}
+          {data?.data.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{item.code}</TableCell>
+              <TableCell className="font-medium">{item.type}</TableCell>
+              <TableCell>{item.address}</TableCell>
+              <TableCell className="text-right">{item.year}</TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>

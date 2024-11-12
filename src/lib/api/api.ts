@@ -7,15 +7,18 @@ export const httpClient = axios.create({
   timeout: 1000,
 })
 
+httpClient.defaults.headers.post['Content-Type'] = 'application/json'
+
 httpClient.interceptors.request.use(
   async (config) => {
     const cookiesStore = await cookies()
     const token = cookiesStore.get('PFW_AT')
 
     if (token) {
-      config.headers.set('X-AUTH-TOKEN', token.value)
+      config.headers['X-AUTH-TOKEN'] = token.value
     }
 
+    console.log(config)
     return config
   },
   (error) => {

@@ -9,8 +9,10 @@ export function AppBar() {
     <div className="flex px-4 justify-between items-center py-3 bg-gray-100 h-16">
       <h1 className="text-2xl font-bold">{title}</h1>
       <div>
-        {actions.map((action, index) => (
-          <Button key={index}>Cadastrar propriedades</Button>
+        {actions.map(({ onClick, label, disabled }, index) => (
+          <Button onClick={onClick} key={index} disabled={disabled}>
+            {label}
+          </Button>
         ))}
       </div>
     </div>
