@@ -1,7 +1,7 @@
 'use client'
 
 import { z } from 'zod'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Form,
@@ -40,11 +40,24 @@ const addressSchema = z.object({
   neighborhood: z.string().min(1, 'Bairro é obrigatório'),
 })
 
+const contactSchema = z.object({
+  type: z.string().min(1, 'Tipo de contato é obrigatório'),
+  contact: z.string().min(1, 'Contato é obrigatório'),
+})
+
+const lessorSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  contacts: z.array(contactSchema),
+  registration_code: z.string().min(1, 'Código de registro é obrigatório'),
+  notes: z.string().optional(),
+})
+
 const propertiesSchema = z.object({
   type: z.string().min(1, 'Tipo é obrigatório'),
   code: z.string().min(1, 'Código é obrigatório'),
   address: addressSchema,
   year: z.string().regex(/^\d{4}$/, 'Ano deve ser um número de 4 dígitos'),
+  lessor: lessorSchema,
 })
 
 interface InputGroupProps {
@@ -52,7 +65,7 @@ interface InputGroupProps {
 }
 
 const InputGroup = ({ children }: InputGroupProps) => (
-  <div className="flex space-x-4 w-full">{children}</div>
+  <div className="flex space-x-4 w-full items-center">{children}</div>
 )
 
 export function RegisterProperties() {
@@ -70,6 +83,7 @@ export function RegisterProperties() {
     defaultValues: {
       type: '',
       code: '',
+      year: '',
       address: {
         street: '',
         number: '',
@@ -77,8 +91,18 @@ export function RegisterProperties() {
         complement: '',
         neighborhood: '',
       },
-      year: '',
+      lessor: {
+        name: '',
+        contacts: [{ type: '', contact: '' }],
+        registration_code: '',
+        notes: '',
+      },
     },
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'lessor.contacts',
   })
 
   async function onSubmit(data: z.infer<typeof propertiesSchema>) {
@@ -86,6 +110,7 @@ export function RegisterProperties() {
       await mutateAsync({
         type: data.type,
         code: data.code,
+        year: data.year,
         address: {
           street: data.address.street,
           number: data.address.number,
@@ -93,7 +118,12 @@ export function RegisterProperties() {
           complement: data.address.complement,
           neighborhood: data.address.neighborhood,
         },
-        year: data.year,
+        lessor: {
+          name: data.lessor.name,
+          contacts: data.lessor.contacts,
+          registration_code: data.lessor.registration_code,
+          notes: data.lessor.notes,
+        },
       })
 
       router.push('/imoveis')
@@ -102,16 +132,17 @@ export function RegisterProperties() {
 
   return (
     <div className="p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Insira as informações do imóvel</CardTitle>
-          <CardDescription>
-            Preencha os campos abaixo para cadastrar um imóvel.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Insira as informações do imóvel</CardTitle>
+              <CardDescription>
+                Preencha os campos abaixo para cadastrar um imóvel.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
               <InputGroup>
                 <Controller
                   name="type"
@@ -240,14 +271,120 @@ export function RegisterProperties() {
                   )}
                 />
               </InputGroup>
+            </CardContent>
+          </Card>
 
-              <Button disabled={isPending} className="w-full" type="submit">
-                Salvar
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>Insira as informações do locador</CardTitle>
+              <CardDescription>
+                Preencha os campos abaixo para cadastrar um locador.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="lessor.registration_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CPF/CNPJ</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o CPF/CNPJ" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lessor.name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o nome" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {fields.map((field, index) => (
+                <InputGroup key={field.id}>
+                  <FormField
+                    control={form.control}
+                    name={`lessor.contacts.${index}.type`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Contato</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Tipo de Contato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="phone">Telefone</SelectItem>
+                              <SelectItem value="email">Email</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`lessor.contacts.${index}.contact`}
+                    render={({ field }) => (
+                      <FormItem className="w-[180px]">
+                        <FormLabel>Contato</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Digite o contato" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    className="self-end"
+                    type="button"
+                    onClick={() => remove(index)}
+                  >
+                    Remover
+                  </Button>
+                </InputGroup>
+              ))}
+              <Button
+                type="button"
+                onClick={() => append({ type: '', contact: '' })}
+              >
+                Adicionar novo Contato
               </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+              <FormField
+                control={form.control}
+                name="lessor.notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notas</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite as notas" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Button disabled={isPending} className="w-full" type="submit">
+            Salvar
+          </Button>
+        </form>
+      </Form>
     </div>
   )
 }

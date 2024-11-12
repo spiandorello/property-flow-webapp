@@ -39,7 +39,9 @@ export function Properties() {
             <TableHead className="w-[100px]">Código</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Endereço</TableHead>
-            <TableHead className="w-[100px] text-right">Ano</TableHead>
+            <TableHead className="w-[100px]">Ano</TableHead>
+            <TableHead>Locador</TableHead>
+            <TableHead>Contato</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -48,7 +50,9 @@ export function Properties() {
               <TableCell>{item.code}</TableCell>
               <TableCell className="font-medium">{item.type}</TableCell>
               <TableCell>{item.address}</TableCell>
-              <TableCell className="text-right">{item.year}</TableCell>
+              <TableCell>{item.year}</TableCell>
+              <TableCell>{item.lessor.name}</TableCell>
+              <TableCell>{item.lessor.contacts[0].contact}</TableCell>
             </TableRow>
           ))}
         </TableBody>
