@@ -1,4 +1,4 @@
-import { Home, Hotel } from 'lucide-react'
+import { Home, Hotel, BookText } from 'lucide-react'
 import Link from 'next/link'
 
 import {
@@ -22,6 +22,11 @@ const items = [
     title: 'Imovéis',
     url: '/imoveis',
     icon: Hotel,
+  },
+  {
+    title: 'Locações',
+    url: '/locacoes',
+    icon: BookText,
   },
 ]
 

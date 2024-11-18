@@ -16,5 +16,5 @@ export default function Page() {
     setActions([])
   }, [setActions, setTitle])
 
-  return <div>maoi</div>
+  return <div className="mt-4 px-4">Dashboard</div>
 }

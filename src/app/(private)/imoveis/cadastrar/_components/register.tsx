@@ -69,9 +69,9 @@ const InputGroup = ({ children }: InputGroupProps) => (
 )
 
 export function RegisterProperties() {
+  const router = useRouter()
   const { setActions, setTitle } = useAppBar()
   const { mutateAsync, isPending } = useCreateProperty()
-  const router = useRouter()
 
   useEffect(() => {
     setTitle('Imovéis | Cadastrar')
@@ -125,7 +125,6 @@ export function RegisterProperties() {
           notes: data.lessor.notes,
         },
       })
-
       router.push('/imoveis')
     } catch {}
   }

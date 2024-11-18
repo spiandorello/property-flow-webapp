@@ -8,9 +8,11 @@ import { CreatePropertiesRequest } from '@/hooks/queries/proprieties/useProperti
 
 export const useCreateProperty = () => {
   const queryClient = useQueryClient()
-  queryClient.invalidateQueries({ queryKey: ['properties'] })
 
   return useMutation<UseMutationOptions, Error, CreatePropertiesRequest>({
     mutationFn: create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
   })
 }
