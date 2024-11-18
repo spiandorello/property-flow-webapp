@@ -28,10 +28,10 @@ export type ListPropertiesResponse = {
   data: Properties[]
 }
 
-type contact = {
-  type: string
-  contact: string
-}
+// type contact = {
+//   type: string
+//   contact: string
+// }
 
 export type CreatePropertiesRequest = {
   type: string
@@ -44,12 +44,12 @@ export type CreatePropertiesRequest = {
     complement?: string
     neighborhood: string
   }
-  lessor: {
-    name: string
-    contacts: contact[]
-    registration_code: string
-    notes?: string
-  }
+  // lessor: {
+  //   name: string
+  //   contacts: contact[]
+  //   registration_code: string
+  //   notes?: string
+  // }
 }
 
 const propertiesKey = 'properties'

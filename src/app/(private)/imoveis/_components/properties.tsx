@@ -52,7 +52,7 @@ export function Properties() {
               <TableCell>{item.address}</TableCell>
               <TableCell>{item.year}</TableCell>
               <TableCell>{item.lessor.name}</TableCell>
-              <TableCell>{item.lessor.contacts[0].contact}</TableCell>
+              <TableCell>{item.lessor?.contacts[0]?.contact}</TableCell>
             </TableRow>
           ))}
         </TableBody>

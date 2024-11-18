@@ -17,10 +17,6 @@ export async function list(): Promise<ListPropertiesResponse> {
 }
 
 export const create = async (property: CreatePropertiesRequest) => {
-  const response = await httpClient.post('/ws/properties', property, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  const response = await httpClient.post('/ws/properties', property)
   return response.data
 }
