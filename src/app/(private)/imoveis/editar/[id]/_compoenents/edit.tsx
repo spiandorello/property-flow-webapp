@@ -79,12 +79,12 @@ const numberMask = (value: string) => {
   return value.replace(/\D/g, '').slice(0, 9)
 }
 
-export function RegisterProperties() {
+export function EditProperties() {
   const { setActions, setTitle } = useAppBar()
   const { mutateAsync, isPending } = useCreateProperty()
 
   useEffect(() => {
-    setTitle('Imovéis | Cadastrar')
+    setTitle('Imovéis | Editar')
     setActions([])
   }, [setActions, setTitle])
 
