@@ -27,9 +27,7 @@ export function Properties() {
         onClick: () => router.push('/imoveis/cadastrar'),
       },
     ])
-  }, [setActions, setTitle])
-
-  console.log(data)
+  }, [setActions, setTitle, router])
 
   return (
     <div className="mt-4 px-4">
@@ -49,7 +47,7 @@ export function Properties() {
             <TableRow key={item.id}>
               <TableCell>{item.code}</TableCell>
               <TableCell className="font-medium">{item.type}</TableCell>
-              <TableCell>{item.address}</TableCell>
+              <TableCell>{item.address.street}</TableCell>
               <TableCell>{item.year}</TableCell>
               <TableCell>{item.lessor.name}</TableCell>
               <TableCell>{item.lessor?.contacts[0]?.contact}</TableCell>

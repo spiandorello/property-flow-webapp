@@ -4,13 +4,13 @@ import {
   CreatePropertiesResponse,
   ListPropertiesResponse,
   PropertyRequest,
-  PropertyResponse,
+  Properties,
 } from '@/hooks/queries/proprieties/useProperties'
 import { httpClient } from '@/lib/api/api'
 
-export async function get(params: PropertyRequest): Promise<PropertyResponse> {
+export async function get(params: PropertyRequest): Promise<Properties> {
   try {
-    const response = await httpClient.get<PropertyResponse>(
+    const response = await httpClient.get<Properties>(
       '/ws/properties/' + params.id,
     )
     return response.data

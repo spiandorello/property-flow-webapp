@@ -11,11 +11,19 @@ export type Lessor = {
   notes?: string
 }
 
+export type Address = {
+  street: string
+  number: string
+  zip_code: string
+  complement: string
+  neighborhood: string
+}
+
 export type Properties = {
   id: string
   type: string
   code: string
-  address: string
+  address: Address
   year: string
   lessor: Lessor
 }
@@ -79,20 +87,11 @@ export type PropertyRequest = {
   id: string
 }
 
-export type PropertyResponse = {
-  data: Properties
-}
-
 export const useProperty = (
   params: PropertyRequest,
-  options?: UseQueryOptions<
-    PropertyResponse,
-    Error,
-    PropertyResponse,
-    QueryKey
-  >,
+  options?: UseQueryOptions<Properties, Error, Properties, QueryKey>,
 ) => {
-  return useQuery<PropertyResponse>({
+  return useQuery<Properties>({
     queryKey: [propertiesKey, params],
     queryFn: () => get(params),
     ...options,

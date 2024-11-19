@@ -1,7 +1,8 @@
 'use client'
 
 import { z } from 'zod'
-import { useForm, Controller, useWatch } from 'react-hook-form'
+import { useParams } from 'next/navigation'
+import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Form,
@@ -42,17 +43,17 @@ const addressSchema = z.object({
   neighborhood: z.string().min(1, 'Bairro é obrigatório'),
 })
 
-// const contactSchema = z.object({
-//   type: z.string().min(1, 'Tipo de contato é obrigatório'),
-//   contact: z.string().min(1, 'Contato é obrigatório'),
-// })
+const contactSchema = z.object({
+  type: z.string().min(1, 'Tipo de contato é obrigatório'),
+  contact: z.string().min(1, 'Contato é obrigatório'),
+})
 
-// const lessorSchema = z.object({
-//   name: z.string().min(1, 'Nome é obrigatório'),
-//   contacts: z.array(contactSchema),
-//   registration_code: z.string().min(1, 'Código de registro é obrigatório'),
-//   notes: z.string().optional(),
-// })
+const lessorSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  contacts: z.array(contactSchema),
+  registration_code: z.string().min(1, 'Código de registro é obrigatório'),
+  notes: z.string().optional(),
+})
 
 const propertiesSchema = z.object({
   type: z.string().min(1, 'Tipo é obrigatório'),
@@ -69,6 +70,25 @@ const InputGroup = ({ children }: InputGroupProps) => (
   <div className="flex space-x-4 w-full items-center">{children}</div>
 )
 
+const cpfOrCnpjMask = (value: string) => {
+  value = value.replace(/\D/g, '') // Remove all non-digit characters
+
+  if (value.length <= 11) {
+    return value
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      .slice(0, 14)
+  }
+
+  return value
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
+    .slice(0, 18)
+}
+
 const zipCodeMask = (value: string) => {
   return value
     .replace(/\D/g, '') // Remove tudo que não for dígito
@@ -80,18 +100,34 @@ const numberMask = (value: string) => {
   return value.replace(/\D/g, '').slice(0, 9)
 }
 
+const phoneNumberMask = (value: string) => {
+  value = value.replace(/\D/g, '') // Remove all non-digit characters
+
+  if (value.length <= 10) {
+    return value
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+      .slice(0, 14)
+  }
+
+  return value
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .slice(0, 15)
+}
+
 export function EditProperties() {
+  const { id } = useParams()
   const { setActions, setTitle } = useAppBar()
 
-  const property = useProperty({ id: 'e5e42481-0c7c-46f6-8d34-8a3e52c3766c' })
-  console.log(property.data)
+  const { data: propertyData, isLoading } = useProperty(
+    {
+      id: id as string,
+    },
+    { enabled: !!id, queryKey: ['property', { id }] },
+  )
 
   const { mutateAsync, isPending } = useCreateProperty()
-
-  useEffect(() => {
-    setTitle('Imovéis | Editar')
-    setActions([])
-  }, [setActions, setTitle])
 
   const form = useForm<z.infer<typeof propertiesSchema>>({
     resolver: zodResolver(propertiesSchema),
@@ -106,17 +142,28 @@ export function EditProperties() {
         complement: '',
         neighborhood: '',
       },
-      // lessor: {
-      //   name: '',
-      //   contacts: [{ type: '', contact: '' }],
-      //   registration_code: '',
-      //   notes: '',
-      // },
+    },
+  })
+
+  const lessorForm = useForm<z.infer<typeof lessorSchema>>({
+    resolver: zodResolver(lessorSchema),
+    defaultValues: {
+      name: '',
+      contacts: [{ type: '', contact: '' }],
+      registration_code: '',
+      notes: '',
     },
   })
 
   const zipCode = useWatch({ control: form.control, name: 'address.zip_code' })
   const rawZipCode = useMemo(() => zipCode.replace(/\D/g, ''), [zipCode])
+
+  const contactsType = useWatch({
+    control: lessorForm.control,
+    name: 'contacts',
+  })
+
+  console.log(contactsType)
 
   const { data } = useCep(
     { cep: rawZipCode },
@@ -126,10 +173,10 @@ export function EditProperties() {
     },
   )
 
-  // const { fields, append, remove } = useFieldArray({
-  //   control: form.control,
-  //   name: 'lessor.contacts',
-  // })
+  const { fields, append, remove } = useFieldArray({
+    control: lessorForm.control,
+    name: 'contacts',
+  })
 
   async function onSubmit(data: z.infer<typeof propertiesSchema>) {
     try {
@@ -144,14 +191,13 @@ export function EditProperties() {
           complement: data.address.complement,
           neighborhood: data.address.neighborhood,
         },
-        // lessor: {
-        //   name: data.lessor.name,
-        //   contacts: data.lessor.contacts,
-        //   registration_code: data.lessor.registration_code,
-        //   notes: data.lessor.notes,
-        // },
       })
-      // router.push('/imoveis')
+    } catch {}
+  }
+
+  async function onLessorSubmit(data: z.infer<typeof lessorSchema>) {
+    try {
+      console.log(data)
     } catch {}
   }
 
@@ -162,8 +208,26 @@ export function EditProperties() {
     }
   }, [data, form.setValue])
 
+  useEffect(() => {
+    setTitle('Imovéis | Editar')
+    setActions([])
+  }, [setActions, setTitle])
+
+  useEffect(() => {
+    if (isLoading || !propertyData) return
+    form.setValue('type', propertyData.type)
+    form.setValue('code', propertyData.code)
+    form.setValue('year', propertyData.year)
+    form.setValue('address.zip_code', propertyData.address.zip_code)
+    form.setValue('address.street', propertyData.address.street)
+    form.setValue('address.number', propertyData.address.number)
+    form.setValue('address.complement', propertyData.address.complement)
+    form.setValue('address.complement', propertyData.address.complement)
+    form.setValue('address.neighborhood', propertyData.address.neighborhood)
+  }, [propertyData])
+
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <Card>
@@ -345,158 +409,192 @@ export function EditProperties() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Adicione um locador</CardTitle>
-              <CardDescription>
-                Clique no botão e adicione o locador deste imóvel.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <Tabs defaultValue="register_lessor">
-                <TabsList className="h-fit flex">
-                  <TabsTrigger value="register_lessor" className="flex flex-1">
-                    <div>
-                      <h1 className="text-lg font-bold mb-1">
-                        Adicionar locador não cadastrado
-                      </h1>
-                      <p>
-                        Crie o cadastro de um locador ainda não registrado na
-                        plataforma.
-                      </p>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="append_lessor" className="flex flex-1">
-                    <div>
-                      <h1 className="text-lg font-bold mb-1">
-                        Adicionar locador já cadastrado
-                      </h1>
-                      <p>
-                        Vincule um locador que já foi registrado na plataforma.
-                      </p>
-                    </div>
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* <TabsContent value="register_lessor"> */}
-                {/*  <Card className="flex-1"> */}
-                {/*    <CardHeader> */}
-                {/*      <CardTitle>Insira as informações do locador</CardTitle> */}
-                {/*      <CardDescription> */}
-                {/*        Preencha os campos abaixo para cadastrar um locador. */}
-                {/*      </CardDescription> */}
-                {/*    </CardHeader> */}
-
-                {/*    <CardContent> */}
-                {/*      <FormField */}
-                {/*        control={form.control} */}
-                {/*        name="lessor.registration_code" */}
-                {/*        render={({ field }) => ( */}
-                {/*          <FormItem> */}
-                {/*            <FormLabel>CPF/CNPJ</FormLabel> */}
-                {/*            <FormControl> */}
-                {/*              <Input placeholder="Digite o CPF/CNPJ" {...field} /> */}
-                {/*            </FormControl> */}
-                {/*            <FormMessage /> */}
-                {/*          </FormItem> */}
-                {/*        )} */}
-                {/*      /> */}
-
-                {/*      <FormField */}
-                {/*        control={form.control} */}
-                {/*        name="lessor.name" */}
-                {/*        render={({ field }) => ( */}
-                {/*          <FormItem> */}
-                {/*            <FormLabel>Nome</FormLabel> */}
-                {/*            <FormControl> */}
-                {/*              <Input placeholder="Digite o nome" {...field} /> */}
-                {/*            </FormControl> */}
-                {/*            <FormMessage /> */}
-                {/*          </FormItem> */}
-                {/*        )} */}
-                {/*      /> */}
-                {/*      {fields.map((field, index) => ( */}
-                {/*        <InputGroup key={field.id}> */}
-                {/*          <FormField */}
-                {/*            control={form.control} */}
-                {/*            name={`lessor.contacts.${index}.type`} */}
-                {/*            render={({ field }) => ( */}
-                {/*              <FormItem> */}
-                {/*                <FormLabel>Tipo de Contato</FormLabel> */}
-                {/*                <FormControl> */}
-                {/*                  <Select */}
-                {/*                    value={field.value} */}
-                {/*                    onValueChange={field.onChange} */}
-                {/*                  > */}
-                {/*                    <SelectTrigger className="w-[180px]"> */}
-                {/*                      <SelectValue placeholder="Tipo de Contato" /> */}
-                {/*                    </SelectTrigger> */}
-                {/*                    <SelectContent> */}
-                {/*                      <SelectItem value="phone"> */}
-                {/*                        Telefone */}
-                {/*                      </SelectItem> */}
-                {/*                      <SelectItem value="email">Email</SelectItem> */}
-                {/*                    </SelectContent> */}
-                {/*                  </Select> */}
-                {/*                </FormControl> */}
-                {/*                <FormMessage /> */}
-                {/*              </FormItem> */}
-                {/*            )} */}
-                {/*          /> */}
-                {/*          <FormField */}
-                {/*            control={form.control} */}
-                {/*            name={`lessor.contacts.${index}.contact`} */}
-                {/*            render={({ field }) => ( */}
-                {/*              <FormItem className="w-[180px]"> */}
-                {/*                <FormLabel>Contato</FormLabel> */}
-                {/*                <FormControl> */}
-                {/*                  <Input */}
-                {/*                    placeholder="Digite o contato" */}
-                {/*                    {...field} */}
-                {/*                  /> */}
-                {/*                </FormControl> */}
-                {/*                <FormMessage /> */}
-                {/*              </FormItem> */}
-                {/*            )} */}
-                {/*          /> */}
-                {/*          <Button */}
-                {/*            className="self-end" */}
-                {/*            type="button" */}
-                {/*            onClick={() => remove(index)} */}
-                {/*          > */}
-                {/*            Remover */}
-                {/*          </Button> */}
-                {/*        </InputGroup> */}
-                {/*      ))} */}
-                {/*      <Button */}
-                {/*        type="button" */}
-                {/*        onClick={() => append({ type: '', contact: '' })} */}
-                {/*      > */}
-                {/*        Adicionar novo Contato */}
-                {/*      </Button> */}
-                {/*      <FormField */}
-                {/*        control={form.control} */}
-                {/*        name="lessor.notes" */}
-                {/*        render={({ field }) => ( */}
-                {/*          <FormItem> */}
-                {/*            <FormLabel>Notas</FormLabel> */}
-                {/*            <FormControl> */}
-                {/*              <Input placeholder="Digite as notas" {...field} /> */}
-                {/*            </FormControl> */}
-                {/*            <FormMessage /> */}
-                {/*          </FormItem> */}
-                {/*        )} */}
-                {/*      /> */}
-                {/*    </CardContent> */}
-                {/*  </Card> */}
-                {/* </TabsContent> */}
-                <TabsContent value="append_lessor"></TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
         </form>
       </Form>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Adicione um locador</CardTitle>
+          <CardDescription>
+            Clique no botão e adicione o locador deste imóvel.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1">
+          <Tabs defaultValue="register_lessor">
+            <TabsList className="h-fit flex">
+              <TabsTrigger value="register_lessor" className="flex flex-1">
+                <div>
+                  <h1 className="text-lg font-bold mb-1">
+                    Adicionar locador não cadastrado
+                  </h1>
+                  <p>
+                    Crie o cadastro de um locador ainda não registrado na
+                    plataforma.
+                  </p>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger value="append_lessor" className="flex flex-1">
+                <div>
+                  <h1 className="text-lg font-bold mb-1">
+                    Adicionar locador já cadastrado
+                  </h1>
+                  <p>Vincule um locador que já foi registrado na plataforma.</p>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="register_lessor">
+              <Card className="flex-1">
+                <CardHeader>
+                  <CardTitle>Insira as informações do locador</CardTitle>
+                  <CardDescription>
+                    Preencha os campos abaixo para cadastrar um locador.
+                  </CardDescription>
+                </CardHeader>
+
+                <Form {...lessorForm}>
+                  <form
+                    className="space-y-4"
+                    onSubmit={lessorForm.handleSubmit(onLessorSubmit)}
+                  >
+                    <CardContent>
+                      <FormField
+                        control={lessorForm.control}
+                        name="registration_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CPF/CNPJ</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Digite o CPF/CNPJ"
+                                {...field}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLInputElement>,
+                                ) => {
+                                  field.onChange(cpfOrCnpjMask(e.target.value))
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={lessorForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Digite o nome" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {fields.map((field, index) => (
+                        <InputGroup key={field.id}>
+                          <FormField
+                            control={lessorForm.control}
+                            name={`contacts.${index}.type`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tipo de Contato</FormLabel>
+                                <FormControl>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                  >
+                                    <SelectTrigger className="w-[180px]">
+                                      <SelectValue placeholder="Tipo de Contato" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="phone">
+                                        Telefone
+                                      </SelectItem>
+                                      <SelectItem value="email">
+                                        Email
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={lessorForm.control}
+                            name={`contacts.${index}.contact`}
+                            render={({ field }) => (
+                              <FormItem className="w-[180px]">
+                                <FormLabel>Contato</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    disabled={!contactsType[index]?.type}
+                                    placeholder="Digite o contato"
+                                    {...field}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLInputElement>,
+                                    ) => {
+                                      if (
+                                        contactsType[index]?.type === 'phone'
+                                      ) {
+                                        return field.onChange(
+                                          phoneNumberMask(e.target.value),
+                                        )
+                                      }
+
+                                      return field.onChange(e.target.value)
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button
+                            className="self-end"
+                            type="button"
+                            onClick={() => remove(index)}
+                          >
+                            Remover
+                          </Button>
+                        </InputGroup>
+                      ))}
+                      <Button
+                        type="button"
+                        onClick={() => append({ type: '', contact: '' })}
+                      >
+                        Adicionar novo Contato
+                      </Button>
+                      <FormField
+                        control={lessorForm.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Notas</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Digite as notas" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex flex-1 justify-end mt-8">
+                        <Button disabled={isPending} type="submit">
+                          Salvar locador
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </form>
+                </Form>
+              </Card>
+            </TabsContent>
+            <TabsContent value="append_lessor"></TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }

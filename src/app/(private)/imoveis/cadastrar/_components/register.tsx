@@ -103,12 +103,6 @@ export function RegisterProperties() {
         complement: '',
         neighborhood: '',
       },
-      // lessor: {
-      //   name: '',
-      //   contacts: [{ type: '', contact: '' }],
-      //   registration_code: '',
-      //   notes: '',
-      // },
     },
   })
 
