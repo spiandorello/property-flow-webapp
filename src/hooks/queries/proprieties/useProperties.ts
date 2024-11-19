@@ -1,5 +1,5 @@
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query'
-import { list } from '@/services/properties/service'
+import { list, get } from '@/services/properties/service'
 
 export type Lessor = {
   name: string
@@ -32,6 +32,11 @@ export type ListPropertiesResponse = {
 //   type: string
 //   contact: string
 // }
+
+export type CreatePropertiesResponse = {
+  id: string
+  code: string
+}
 
 export type CreatePropertiesRequest = {
   type: string
@@ -66,6 +71,30 @@ export const useListProperties = (
   return useQuery<ListPropertiesResponse>({
     queryKey: [propertiesKey, params],
     queryFn: list,
+    ...options,
+  })
+}
+
+export type PropertyRequest = {
+  id: string
+}
+
+export type PropertyResponse = {
+  data: Properties
+}
+
+export const useProperty = (
+  params: PropertyRequest,
+  options?: UseQueryOptions<
+    PropertyResponse,
+    Error,
+    PropertyResponse,
+    QueryKey
+  >,
+) => {
+  return useQuery<PropertyResponse>({
+    queryKey: [propertiesKey, params],
+    queryFn: () => get(params),
     ...options,
   })
 }

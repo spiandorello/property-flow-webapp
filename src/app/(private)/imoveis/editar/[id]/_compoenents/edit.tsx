@@ -32,6 +32,7 @@ import {
 import { useCreateProperty } from '@/hooks/mutations/proprieties/create'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCep } from '@/hooks/queries/cep/useCep'
+import { useProperty } from '@/hooks/queries/proprieties/useProperties'
 
 const addressSchema = z.object({
   street: z.string().min(1, 'Logradouro é obrigatória'),
@@ -81,6 +82,10 @@ const numberMask = (value: string) => {
 
 export function EditProperties() {
   const { setActions, setTitle } = useAppBar()
+
+  const property = useProperty({ id: 'e5e42481-0c7c-46f6-8d34-8a3e52c3766c' })
+  console.log(property.data)
+
   const { mutateAsync, isPending } = useCreateProperty()
 
   useEffect(() => {
@@ -165,7 +170,7 @@ export function EditProperties() {
             <CardHeader>
               <CardTitle>Insira as informações do imóvel</CardTitle>
               <CardDescription>
-                Preencha os campos abaixo para cadastrar um imóvel.
+                Preencha os campos abaixo para editar um imóvel.
               </CardDescription>
             </CardHeader>
 
@@ -335,7 +340,7 @@ export function EditProperties() {
 
               <div className="flex flex-1 justify-end mt-8">
                 <Button disabled={isPending} type="submit">
-                  Cadastrar imóvel
+                  Editar imóvel
                 </Button>
               </div>
             </CardContent>
@@ -351,11 +356,7 @@ export function EditProperties() {
             <CardContent className="flex-1">
               <Tabs defaultValue="register_lessor">
                 <TabsList className="h-fit flex">
-                  <TabsTrigger
-                    disabled
-                    value="register_lessor"
-                    className="flex flex-1"
-                  >
+                  <TabsTrigger value="register_lessor" className="flex flex-1">
                     <div>
                       <h1 className="text-lg font-bold mb-1">
                         Adicionar locador não cadastrado
@@ -366,11 +367,7 @@ export function EditProperties() {
                       </p>
                     </div>
                   </TabsTrigger>
-                  <TabsTrigger
-                    disabled
-                    value="append_lessor"
-                    className="flex flex-1"
-                  >
+                  <TabsTrigger value="append_lessor" className="flex flex-1">
                     <div>
                       <h1 className="text-lg font-bold mb-1">
                         Adicionar locador já cadastrado

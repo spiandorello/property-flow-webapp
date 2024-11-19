@@ -32,6 +32,7 @@ import {
 import { useCreateProperty } from '@/hooks/mutations/proprieties/create'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCep } from '@/hooks/queries/cep/useCep'
+import { useRouter } from 'next/navigation'
 
 const addressSchema = z.object({
   street: z.string().min(1, 'Logradouro é obrigatória'),
@@ -80,6 +81,7 @@ const numberMask = (value: string) => {
 }
 
 export function RegisterProperties() {
+  const router = useRouter()
   const { setActions, setTitle } = useAppBar()
   const { mutateAsync, isPending } = useCreateProperty()
 
@@ -128,7 +130,7 @@ export function RegisterProperties() {
 
   async function onSubmit(data: z.infer<typeof propertiesSchema>) {
     try {
-      await mutateAsync({
+      const { id } = await mutateAsync({
         type: data.type,
         code: data.code,
         year: data.year,
@@ -146,8 +148,11 @@ export function RegisterProperties() {
         //   notes: data.lessor.notes,
         // },
       })
-      // router.push('/imoveis')
-    } catch {}
+
+      router.push(`/imoveis/editar/${id}`)
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   useEffect(() => {

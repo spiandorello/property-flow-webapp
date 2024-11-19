@@ -1,9 +1,24 @@
 'use server'
 import {
   CreatePropertiesRequest,
+  CreatePropertiesResponse,
   ListPropertiesResponse,
+  PropertyRequest,
+  PropertyResponse,
 } from '@/hooks/queries/proprieties/useProperties'
 import { httpClient } from '@/lib/api/api'
+
+export async function get(params: PropertyRequest): Promise<PropertyResponse> {
+  try {
+    const response = await httpClient.get<PropertyResponse>(
+      '/ws/properties/' + params.id,
+    )
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch properties:', error)
+    throw error
+  }
+}
 
 export async function list(): Promise<ListPropertiesResponse> {
   try {
@@ -16,7 +31,12 @@ export async function list(): Promise<ListPropertiesResponse> {
   }
 }
 
-export const create = async (property: CreatePropertiesRequest) => {
-  const response = await httpClient.post('/ws/properties', property)
+export const create = async (
+  property: CreatePropertiesRequest,
+): Promise<CreatePropertiesResponse> => {
+  const response = await httpClient.post<CreatePropertiesResponse>(
+    '/ws/properties',
+    property,
+  )
   return response.data
 }
