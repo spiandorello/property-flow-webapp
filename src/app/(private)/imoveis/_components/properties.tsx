@@ -20,7 +20,6 @@ import { useAppBar } from '@/store/appBar/appBar'
 import { useEffect } from 'react'
 import { useListProperties } from '@/hooks/queries/proprieties/useProperties'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { MoreVertical } from 'lucide-react'
 
 export function Properties() {

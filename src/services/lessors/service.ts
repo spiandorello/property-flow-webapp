@@ -38,8 +38,6 @@ export async function search(
       searchParams.append('name', params.name)
     }
 
-    console.log('url', searchParams.toString())
-
     const response = await httpClient.get<SearchLessor[]>(
       `/ws/lessors/search?${searchParams.toString()}`,
     )
@@ -53,6 +51,11 @@ export async function search(
 export const list = async (
   params?: ListLessorRequest,
 ): Promise<ListLessorResponse> => {
+  const searchParams = new URLSearchParams()
+  if (params) {
+    searchParams.append('registration_code', params?.name ?? '')
+  }
+
   const response = await httpClient.get<ListLessorResponse>('/ws/lessors')
   return response.data
 }

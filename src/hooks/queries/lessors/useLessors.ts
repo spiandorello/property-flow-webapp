@@ -54,7 +54,9 @@ export type CreateLessorResponse = {
   notes?: string
 }
 
-export type ListLessorRequest = {}
+export type ListLessorRequest = {
+  name?: string
+}
 export type ListLessorResponse = {
   data: Lessor[]
 }

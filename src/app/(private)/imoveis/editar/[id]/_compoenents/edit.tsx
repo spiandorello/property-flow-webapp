@@ -53,7 +53,7 @@ import { useCep } from '@/hooks/queries/cep/useCep'
 import { useProperty } from '@/hooks/queries/proprieties/useProperties'
 import { useCreateLessor } from '@/hooks/mutations/lessors/create'
 import { useSearchLessors } from '@/hooks/queries/lessors/useLessors'
-import { Check, ChevronsUpDown, MoreVertical } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Table,
@@ -63,12 +63,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 
 const addressSchema = z.object({
   street: z.string().min(1, 'Logradouro é obrigatória'),
