@@ -4,6 +4,23 @@ import { z } from 'zod'
 import { useParams } from 'next/navigation'
 import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useToast } from '@/hooks/use-toast'
+
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+
 import {
   Form,
   FormControl,
@@ -21,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppBar } from '@/store/appBar/appBar'
 import {
   CardContent,
@@ -34,6 +51,24 @@ import { useCreateProperty } from '@/hooks/mutations/proprieties/create'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCep } from '@/hooks/queries/cep/useCep'
 import { useProperty } from '@/hooks/queries/proprieties/useProperties'
+import { useCreateLessor } from '@/hooks/mutations/lessors/create'
+import { useSearchLessors } from '@/hooks/queries/lessors/useLessors'
+import { Check, ChevronsUpDown, MoreVertical } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const addressSchema = z.object({
   street: z.string().min(1, 'Logradouro é obrigatória'),
@@ -53,6 +88,10 @@ const lessorSchema = z.object({
   contacts: z.array(contactSchema),
   registration_code: z.string().min(1, 'Código de registro é obrigatório'),
   notes: z.string().optional(),
+})
+
+const lessorAppendSchema = z.object({
+  lessor: z.object({ value: z.string(), label: z.string() }),
 })
 
 const propertiesSchema = z.object({
@@ -119,6 +158,19 @@ const phoneNumberMask = (value: string) => {
 export function EditProperties() {
   const { id } = useParams()
   const { setActions, setTitle } = useAppBar()
+  const { toast } = useToast()
+  const [searchParams, setSearchParams] = useState('')
+
+  const { data: searchedLessors } = useSearchLessors(
+    { name: searchParams, registration_code: searchParams },
+    {
+      queryKey: [
+        'lessors',
+        { name: searchParams, registration_code: searchParams },
+      ],
+    },
+  )
+  const { mutateAsync: createLessor } = useCreateLessor()
 
   const { data: propertyData, isLoading } = useProperty(
     {
@@ -155,6 +207,13 @@ export function EditProperties() {
     },
   })
 
+  const lessorsAppendForm = useForm<z.infer<typeof lessorAppendSchema>>({
+    resolver: zodResolver(lessorAppendSchema),
+    defaultValues: {
+      lessor: { value: '', label: '' },
+    },
+  })
+
   const zipCode = useWatch({ control: form.control, name: 'address.zip_code' })
   const rawZipCode = useMemo(() => zipCode.replace(/\D/g, ''), [zipCode])
 
@@ -162,8 +221,6 @@ export function EditProperties() {
     control: lessorForm.control,
     name: 'contacts',
   })
-
-  console.log(contactsType)
 
   const { data } = useCep(
     { cep: rawZipCode },
@@ -192,12 +249,41 @@ export function EditProperties() {
           neighborhood: data.address.neighborhood,
         },
       })
+
+      toast({
+        title: 'Imóvel editado com sucesso!',
+        description: 'O imóvel foi editado com sucesso.',
+      })
     } catch {}
   }
 
   async function onLessorSubmit(data: z.infer<typeof lessorSchema>) {
     try {
-      console.log(data)
+      await createLessor({
+        name: data.name,
+        contacts: data.contacts,
+        registration_code: data.registration_code,
+        notes: data.notes,
+        property_id: id as string,
+      })
+
+      toast({
+        title: 'Locador adicionado com sucesso!',
+      })
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  async function onLessorAppendSubmit(
+    data: z.infer<typeof lessorAppendSchema>,
+  ) {
+    console.log(data.lessor, id as string)
+
+    try {
+      toast({
+        title: 'Locador vinculado com sucesso!',
+      })
     } catch {}
   }
 
@@ -412,189 +498,324 @@ export function EditProperties() {
         </form>
       </Form>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicione um locador</CardTitle>
-          <CardDescription>
-            Clique no botão e adicione o locador deste imóvel.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1">
-          <Tabs defaultValue="register_lessor">
-            <TabsList className="h-fit flex">
-              <TabsTrigger value="register_lessor" className="flex flex-1">
-                <div>
-                  <h1 className="text-lg font-bold mb-1">
-                    Adicionar locador não cadastrado
-                  </h1>
-                  <p>
-                    Crie o cadastro de um locador ainda não registrado na
-                    plataforma.
-                  </p>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="append_lessor" className="flex flex-1">
-                <div>
-                  <h1 className="text-lg font-bold mb-1">
-                    Adicionar locador já cadastrado
-                  </h1>
-                  <p>Vincule um locador que já foi registrado na plataforma.</p>
-                </div>
-              </TabsTrigger>
-            </TabsList>
+      {propertyData?.lessor?.registration_code && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Locador do imóvel</CardTitle>
+            <CardDescription>
+              Locador registrado para este imóvel
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>CPF/CNPJ</TableHead>
+                  {/* <TableHead>Contato</TableHead> */}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>{propertyData?.lessor.name}</TableCell>
+                  <TableCell>
+                    {propertyData?.lessor.registration_code}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
-            <TabsContent value="register_lessor">
-              <Card className="flex-1">
-                <CardHeader>
-                  <CardTitle>Insira as informações do locador</CardTitle>
-                  <CardDescription>
-                    Preencha os campos abaixo para cadastrar um locador.
-                  </CardDescription>
-                </CardHeader>
+      {!isLoading && !propertyData?.lessor?.registration_code && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Adicione um locador</CardTitle>
+            <CardDescription>
+              Clique no botão e adicione o locador deste imóvel.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <Tabs>
+              <TabsList className="h-fit flex">
+                <TabsTrigger value="register_lessor" className="flex flex-1">
+                  <div>
+                    <h1 className="text-lg font-bold mb-1">
+                      Adicionar locador não cadastrado
+                    </h1>
+                    <p>
+                      Crie o cadastro de um locador ainda não registrado na
+                      plataforma.
+                    </p>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger value="append_lessor" className="flex flex-1">
+                  <div>
+                    <h1 className="text-lg font-bold mb-1">
+                      Adicionar locador já cadastrado
+                    </h1>
+                    <p>
+                      Vincule um locador que já foi registrado na plataforma.
+                    </p>
+                  </div>
+                </TabsTrigger>
+              </TabsList>
 
-                <Form {...lessorForm}>
-                  <form
-                    className="space-y-4"
-                    onSubmit={lessorForm.handleSubmit(onLessorSubmit)}
-                  >
-                    <CardContent>
-                      <FormField
-                        control={lessorForm.control}
-                        name="registration_code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CPF/CNPJ</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Digite o CPF/CNPJ"
-                                {...field}
-                                onChange={(
-                                  e: React.ChangeEvent<HTMLInputElement>,
-                                ) => {
-                                  field.onChange(cpfOrCnpjMask(e.target.value))
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+              <TabsContent value="register_lessor">
+                <Card className="flex-1">
+                  <CardHeader>
+                    <CardTitle>Insira as informações do locador</CardTitle>
+                    <CardDescription>
+                      Preencha os campos abaixo para cadastrar um locador.
+                    </CardDescription>
+                  </CardHeader>
 
-                      <FormField
-                        control={lessorForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Digite o nome" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {fields.map((field, index) => (
-                        <InputGroup key={field.id}>
-                          <FormField
-                            control={lessorForm.control}
-                            name={`contacts.${index}.type`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Tipo de Contato</FormLabel>
-                                <FormControl>
-                                  <Select
-                                    value={field.value}
-                                    onValueChange={field.onChange}
-                                  >
-                                    <SelectTrigger className="w-[180px]">
-                                      <SelectValue placeholder="Tipo de Contato" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="phone">
-                                        Telefone
-                                      </SelectItem>
-                                      <SelectItem value="email">
-                                        Email
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={lessorForm.control}
-                            name={`contacts.${index}.contact`}
-                            render={({ field }) => (
-                              <FormItem className="w-[180px]">
-                                <FormLabel>Contato</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    disabled={!contactsType[index]?.type}
-                                    placeholder="Digite o contato"
-                                    {...field}
-                                    onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>,
-                                    ) => {
-                                      if (
-                                        contactsType[index]?.type === 'phone'
-                                      ) {
-                                        return field.onChange(
-                                          phoneNumberMask(e.target.value),
-                                        )
-                                      }
+                  <Form {...lessorForm}>
+                    <form
+                      className="space-y-4"
+                      onSubmit={lessorForm.handleSubmit(onLessorSubmit)}
+                    >
+                      <CardContent>
+                        <FormField
+                          control={lessorForm.control}
+                          name="registration_code"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>CPF/CNPJ</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Digite o CPF/CNPJ"
+                                  {...field}
+                                  onChange={(
+                                    e: React.ChangeEvent<HTMLInputElement>,
+                                  ) => {
+                                    field.onChange(
+                                      cpfOrCnpjMask(e.target.value),
+                                    )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                                      return field.onChange(e.target.value)
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button
-                            className="self-end"
-                            type="button"
-                            onClick={() => remove(index)}
-                          >
-                            Remover
-                          </Button>
-                        </InputGroup>
-                      ))}
-                      <Button
-                        type="button"
-                        onClick={() => append({ type: '', contact: '' })}
-                      >
-                        Adicionar novo Contato
-                      </Button>
-                      <FormField
-                        control={lessorForm.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Notas</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Digite as notas" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex flex-1 justify-end mt-8">
-                        <Button disabled={isPending} type="submit">
-                          Salvar locador
+                        <FormField
+                          control={lessorForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Digite o nome" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {fields.map((field, index) => (
+                          <InputGroup key={field.id}>
+                            <FormField
+                              control={lessorForm.control}
+                              name={`contacts.${index}.type`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Tipo de Contato</FormLabel>
+                                  <FormControl>
+                                    <Select
+                                      value={field.value}
+                                      onValueChange={field.onChange}
+                                    >
+                                      <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Tipo de Contato" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="phone">
+                                          Telefone
+                                        </SelectItem>
+                                        <SelectItem value="email">
+                                          Email
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={lessorForm.control}
+                              name={`contacts.${index}.contact`}
+                              render={({ field }) => (
+                                <FormItem className="w-[180px]">
+                                  <FormLabel>Contato</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      disabled={!contactsType[index]?.type}
+                                      placeholder="Digite o contato"
+                                      {...field}
+                                      onChange={(
+                                        e: React.ChangeEvent<HTMLInputElement>,
+                                      ) => {
+                                        if (
+                                          contactsType[index]?.type === 'phone'
+                                        ) {
+                                          return field.onChange(
+                                            phoneNumberMask(e.target.value),
+                                          )
+                                        }
+
+                                        return field.onChange(e.target.value)
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button
+                              className="self-end"
+                              type="button"
+                              onClick={() => remove(index)}
+                            >
+                              Remover
+                            </Button>
+                          </InputGroup>
+                        ))}
+                        <Button
+                          type="button"
+                          onClick={() => append({ type: '', contact: '' })}
+                        >
+                          Adicionar novo Contato
                         </Button>
-                      </div>
-                    </CardContent>
-                  </form>
-                </Form>
-              </Card>
-            </TabsContent>
-            <TabsContent value="append_lessor"></TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                        <FormField
+                          control={lessorForm.control}
+                          name="notes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Notas</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Digite as notas"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex flex-1 justify-end mt-8">
+                          <Button disabled={isPending} type="submit">
+                            Salvar locador
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </form>
+                  </Form>
+                </Card>
+              </TabsContent>
+              <TabsContent value="append_lessor">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Adicionar locador já cadastrado</CardTitle>
+                    <CardDescription>
+                      Vincule um locador que já foi registrado na plataforma.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...lessorsAppendForm}>
+                      <form
+                        className="space-y-4"
+                        onSubmit={lessorsAppendForm.handleSubmit(
+                          onLessorAppendSubmit,
+                        )}
+                      >
+                        <FormField
+                          control={lessorsAppendForm.control}
+                          name="lessor"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Selecione o locador</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      className={cn(
+                                        'w-[380px] justify-between',
+                                        !field.value && 'text-muted-foreground',
+                                      )}
+                                    >
+                                      {field.value.label ||
+                                        'Selecione o locador'}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[380px] p-0">
+                                  <Command>
+                                    <CommandInput
+                                      placeholder="Buscar locador..."
+                                      value={searchParams}
+                                      onValueChange={(value) => {
+                                        setSearchParams(value)
+                                        field.onChange(value)
+                                      }}
+                                    />
+                                    <CommandList>
+                                      {searchedLessors?.length ? (
+                                        <CommandGroup>
+                                          {searchedLessors.map((lessor) => (
+                                            <CommandItem
+                                              key={lessor.value}
+                                              value={lessor.label}
+                                              onSelect={() => {
+                                                field.onChange({
+                                                  value: lessor.value,
+                                                  label: lessor.label,
+                                                })
+                                              }}
+                                            >
+                                              {lessor.label}
+                                              <Check
+                                                className={cn(
+                                                  'ml-auto',
+                                                  lessor.value ===
+                                                    field.value.value
+                                                    ? 'opacity-100'
+                                                    : 'opacity-0',
+                                                )}
+                                              />
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      ) : (
+                                        <CommandEmpty>
+                                          Nenhum locador encontrado.
+                                        </CommandEmpty>
+                                      )}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex flex-1 justify-end mt-8">
+                          <Button type="submit">Vincular locador</Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
