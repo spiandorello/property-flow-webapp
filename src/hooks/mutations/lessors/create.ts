@@ -12,8 +12,7 @@ export const useCreateLessor = () => {
   return useMutation<CreateLessorResponse, Error, CreateLessorRequest>({
     mutationFn: create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties'] })
-      queryClient.invalidateQueries({ queryKey: ['lessors'] })
+      queryClient.invalidateQueries()
     },
   })
 }

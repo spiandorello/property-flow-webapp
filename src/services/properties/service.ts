@@ -31,6 +31,22 @@ export async function list(): Promise<ListPropertiesResponse> {
   }
 }
 
+export async function appendLessor(
+  propertyID: string,
+  lessorID: string,
+): Promise<Properties> {
+  try {
+    const response = await httpClient.post<Properties>(
+      `/ws/properties/${propertyID}/lessors`,
+      { lessor_id: lessorID },
+    )
+    return response.data
+  } catch (error) {
+    console.error('Failed to append lessor to property:', error)
+    throw error
+  }
+}
+
 export const create = async (
   property: CreatePropertiesRequest,
 ): Promise<CreatePropertiesResponse> => {

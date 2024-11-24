@@ -58,7 +58,7 @@ export function Properties() {
               <TableCell className="font-medium">{item.type}</TableCell>
               <TableCell>{item.address.street}</TableCell>
               <TableCell>{item.year}</TableCell>
-              <TableCell>{item.lessor.name}</TableCell>
+              <TableCell>{item?.lessor?.name}</TableCell>
               <TableCell>{item.lessor?.contacts[0]?.contact}</TableCell>
               <TableCell>
                 <DropdownMenu>

@@ -25,7 +25,7 @@ export type Properties = {
   code: string
   address: Address
   year: string
-  lessor: Lessor
+  lessor?: Lessor
 }
 
 export type ListPropertiesRequest = {
@@ -57,12 +57,6 @@ export type CreatePropertiesRequest = {
     complement?: string
     neighborhood: string
   }
-  // lessor: {
-  //   name: string
-  //   contacts: contact[]
-  //   registration_code: string
-  //   notes?: string
-  // }
 }
 
 const propertiesKey = 'properties'

@@ -47,7 +47,10 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card'
-import { useCreateProperty } from '@/hooks/mutations/proprieties/create'
+import {
+  useAppendLessor,
+  useCreateProperty,
+} from '@/hooks/mutations/proprieties/create'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCep } from '@/hooks/queries/cep/useCep'
 import { useProperty } from '@/hooks/queries/proprieties/useProperties'
@@ -154,6 +157,8 @@ export function EditProperties() {
   const { setActions, setTitle } = useAppBar()
   const { toast } = useToast()
   const [searchParams, setSearchParams] = useState('')
+
+  const { mutateAsync: appendLessor } = useAppendLessor()
 
   const { data: searchedLessors } = useSearchLessors(
     { name: searchParams, registration_code: searchParams },
@@ -269,16 +274,22 @@ export function EditProperties() {
     }
   }
 
-  async function onLessorAppendSubmit(
-    data: z.infer<typeof lessorAppendSchema>,
-  ) {
-    console.log(data.lessor, id as string)
-
+  async function onLessorAppendSubmit() {
     try {
+      await appendLessor({
+        propertyID: id as string,
+        lessorID: lessorsAppendForm.getValues('lessor').value,
+      })
+
       toast({
         title: 'Locador vinculado com sucesso!',
       })
-    } catch {}
+    } catch {
+      toast({
+        title: 'Erro ao vincular locador',
+        description: 'Ocorreu um erro ao vincular o locador ao imóvel.',
+      })
+    }
   }
 
   useEffect(() => {
