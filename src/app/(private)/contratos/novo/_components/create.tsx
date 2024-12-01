@@ -25,6 +25,11 @@ import CpfOrCnpjInput from '@/components/app/form/cpf-or-cnpj-input'
 import { Input } from '@/components/ui/input'
 import { DatePicker } from '@/components/app/form/data-picker'
 import { useSearchProperties } from '@/hooks/queries/proprieties/useProperties'
+import { z } from 'zod'
+
+const contractSchema = z.object({
+  property_id: z.string(),
+})
 
 export function CreateContract() {
   const { setActions, setTitle } = useAppBar()
@@ -39,7 +44,7 @@ export function CreateContract() {
     setActions([])
   }, [setActions, setTitle])
 
-  async function onSubmit(data: any) {
+  async function onSubmit(data: z.infer<typeof contractSchema>) {
     try {
       console.log(data)
     } catch (e) {
@@ -88,7 +93,7 @@ export function CreateContract() {
                   <FormItem>
                     <FormLabel>Data de Início</FormLabel>
                     <FormControl>
-                      <DatePicker {...field} />
+                      <DatePicker label={''} placeholder={''} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -102,7 +107,7 @@ export function CreateContract() {
                   <FormItem>
                     <FormLabel>Data de Término</FormLabel>
                     <FormControl>
-                      <DatePicker {...field} />
+                      <DatePicker label={''} placeholder={''} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
