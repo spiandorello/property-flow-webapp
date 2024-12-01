@@ -5,6 +5,8 @@ import {
   ListPropertiesResponse,
   PropertyRequest,
   Properties,
+  SearchPropertiesRequest,
+  APIResponse,
 } from '@/hooks/queries/proprieties/useProperties'
 import { httpClient } from '@/lib/api/api'
 
@@ -16,6 +18,23 @@ export async function get(params: PropertyRequest): Promise<Properties> {
     return response.data
   } catch (error) {
     console.error('Failed to fetch properties:', error)
+    throw error
+  }
+}
+
+export async function search(
+  params: SearchPropertiesRequest,
+): Promise<APIResponse<Properties[]>> {
+  try {
+    const response = await httpClient.get<APIResponse<Properties[]>>(
+      '/ws/properties/search',
+      {
+        params,
+      },
+    )
+    return response.data
+  } catch (error) {
+    console.error('Failed to search properties:', error)
     throw error
   }
 }

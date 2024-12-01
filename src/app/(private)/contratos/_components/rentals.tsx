@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useListContracts } from '@/hooks/queries/contracts/useContracts'
 
 const data = [
   {
@@ -49,12 +50,22 @@ export function Rentals() {
   const { setActions, setTitle } = useAppBar()
 
   const handleRowClick = (id: number) => {
-    push(`/locacoes/${id}`)
+    push(`/contratos/${id}`)
   }
 
+  const { data: contracts } = useListContracts()
+
+  console.log(contracts)
+
   useEffect(() => {
-    setTitle('Locações')
-    setActions([])
+    setTitle('Contratos')
+    setActions([
+      {
+        label: 'Novo contrato',
+        onClick: () => push('/contratos/novo'),
+        icon: 'add',
+      },
+    ])
   }, [setActions, setTitle])
 
   return (

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Rentals } from '@/app/(private)/locacoes/_components/rentals'
+import { Rentals } from '@/app/(private)/contratos/_components/rentals'
 
 export const metadata: Metadata = {
   title: 'Locações',

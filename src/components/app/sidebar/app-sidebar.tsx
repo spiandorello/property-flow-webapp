@@ -29,8 +29,8 @@ const items = [
     icon: PersonStanding,
   },
   {
-    title: 'Locações',
-    url: '/locacoes',
+    title: 'Contratos',
+    url: '/contratos',
     icon: BookText,
   },
 ]

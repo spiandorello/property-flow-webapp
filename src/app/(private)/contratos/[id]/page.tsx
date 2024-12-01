@@ -1,4 +1,4 @@
-import { Rental } from '@/app/(private)/locacoes/[id]/_components/rental'
+import { Rental } from '@/app/(private)/contratos/[id]/_components/rental'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {

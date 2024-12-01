@@ -1,5 +1,5 @@
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query'
-import { list, get } from '@/services/properties/service'
+import { list, get, search } from '@/services/properties/service'
 
 export type Lessor = {
   name: string
@@ -32,8 +32,15 @@ export type ListPropertiesRequest = {
   id?: string
 }
 
+export type APIResponse<T> = {
+  data: T
+}
 export type ListPropertiesResponse = {
   data: Properties[]
+}
+
+export type SearchPropertiesRequest = {
+  code?: string
 }
 
 // type contact = {
@@ -88,6 +95,21 @@ export const useProperty = (
   return useQuery<Properties>({
     queryKey: [propertiesKey, params],
     queryFn: () => get(params),
+    ...options,
+  })
+}
+export const useSearchProperties = (
+  params: SearchPropertiesRequest,
+  options?: UseQueryOptions<
+    APIResponse<Properties[]>,
+    Error,
+    APIResponse<Properties[]>,
+    QueryKey
+  >,
+) => {
+  return useQuery<APIResponse<Properties[]>>({
+    queryKey: ['searchProperties', params],
+    queryFn: () => search(params),
     ...options,
   })
 }
