@@ -102,7 +102,7 @@ interface InputGroupProps {
   children: React.ReactNode
 }
 
-const InputGroup = ({ children }: InputGroupProps) => (
+export const InputGroup = ({ children }: InputGroupProps) => (
   <div className="flex space-x-4 w-full items-center">{children}</div>
 )
 
@@ -136,7 +136,7 @@ const numberMask = (value: string) => {
   return value.replace(/\D/g, '').slice(0, 9)
 }
 
-const phoneNumberMask = (value: string) => {
+export const phoneNumberMask = (value: string) => {
   value = value.replace(/\D/g, '') // Remove all non-digit characters
 
   if (value.length <= 10) {

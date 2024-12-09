@@ -34,7 +34,6 @@ interface SearchableSelectProps {
   label: string
   options: Option[]
   placeholder?: string
-  onSearchChange: (value: string) => void
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -42,7 +41,6 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   label,
   options,
   placeholder,
-  onSearchChange,
 }) => {
   const { control } = useFormContext()
   const [searchParams, setSearchParams] = useState('')
@@ -79,10 +77,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 <CommandInput
                   placeholder="Search..."
                   value={searchParams}
-                  onValueChange={(val) => {
-                    onSearchChange(val)
-                    setSearchParams(val)
-                  }}
+                  onValueChange={setSearchParams}
                 />
                 <CommandList>
                   {filteredOptions.length ? (

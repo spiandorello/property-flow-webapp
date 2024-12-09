@@ -32,6 +32,8 @@ interface CpfOrCnpjInputProps {
   label: string
   placeholder: string
   className?: string
+  disabled?: boolean
+  defaultValue?: string
 }
 
 const CpfOrCnpjInput: React.FC<CpfOrCnpjInputProps> = ({
@@ -39,6 +41,8 @@ const CpfOrCnpjInput: React.FC<CpfOrCnpjInputProps> = ({
   label,
   placeholder,
   className,
+  disabled,
+  defaultValue,
 }) => {
   const { control } = useFormContext()
 
@@ -46,13 +50,15 @@ const CpfOrCnpjInput: React.FC<CpfOrCnpjInputProps> = ({
     <Controller
       control={control}
       name={name}
+      disabled={disabled}
+      defaultValue={defaultValue}
       render={({ field }) => (
         <FormItem className={className}>
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <Input
-              placeholder={placeholder}
               {...field}
+              placeholder={placeholder}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 field.onChange(cpfOrCnpjMask(e.target.value))
               }}
