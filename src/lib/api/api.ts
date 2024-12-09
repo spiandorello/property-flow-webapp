@@ -18,7 +18,6 @@ httpClient.interceptors.request.use(
       config.headers['X-AUTH-TOKEN'] = token.value
     }
 
-    console.log(config)
     return config
   },
   (error) => {

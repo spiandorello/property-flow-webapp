@@ -26,15 +26,22 @@ interface DatePickerProps {
   label: string
   placeholder: string
   className?: string
+  disabled?: boolean
 }
 
-export function DatePicker({ name, className, label }: DatePickerProps) {
+export function DatePicker({
+  name,
+  className,
+  label,
+  disabled,
+}: DatePickerProps) {
   const { control } = useFormContext()
 
   return (
     <Controller
       control={control}
       name={name}
+      disabled={disabled}
       render={({ field }) => (
         <FormItem className={className}>
           <FormLabel>{label}</FormLabel>

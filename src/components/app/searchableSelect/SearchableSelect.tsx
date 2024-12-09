@@ -34,6 +34,7 @@ interface SearchableSelectProps {
   label: string
   options: Option[]
   placeholder?: string
+  disabled?: boolean
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -41,6 +42,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   label,
   options,
   placeholder,
+  disabled,
 }) => {
   const { control } = useFormContext()
   const [searchParams, setSearchParams] = useState('')
@@ -53,6 +55,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     <FormField
       control={control}
       name={name}
+      disabled={disabled}
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>{label}</FormLabel>

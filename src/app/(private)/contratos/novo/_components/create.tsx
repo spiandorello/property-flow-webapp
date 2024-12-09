@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm, Controller, useWatch } from 'react-hook-form'
+import { useToast } from '@/hooks/use-toast'
+
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -31,24 +34,16 @@ import {
   InputGroup,
   phoneNumberMask,
 } from '@/app/(private)/imoveis/editar/[id]/_compoenents/edit'
+import { useCreateContract } from '@/hooks/mutations/contracts/create'
 
-export const cpfOrCnpjMask = (value: string) => {
-  value = value.replace(/\D/g, '') // Remove all non-digit characters
-
-  if (value.length <= 11) {
-    return value
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-      .slice(0, 14)
-  }
-
-  return value
-    .replace(/(\d{2})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1/$2')
-    .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
-    .slice(0, 18)
+function formatCurrency(
+  value: number,
+  locale: string,
+  currency: string,
+): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
+    value,
+  )
 }
 
 const contractSchema = z.object({
@@ -64,14 +59,16 @@ const contractSchema = z.object({
   }),
   start_date: z.date(),
   end_date: z.date(),
-  monthly_rent: z.string(),
+  monthly_rent: z.number(),
   due_day: z.string(),
-  security_deposit: z.string(),
+  security_deposit: z.number(),
 })
 
 export function CreateContract() {
   const { setActions, setTitle } = useAppBar()
-
+  const router = useRouter()
+  const { mutateAsync: createContract } = useCreateContract()
+  const { toast } = useToast()
   const form = useForm<z.infer<typeof contractSchema>>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
@@ -100,14 +97,38 @@ export function CreateContract() {
   }, [setActions, setTitle])
 
   useEffect(() => {
+    console.log(tenant)
     if (tenant) {
       form.setValue('tenant.name', tenant.name)
+      // form.setValue('tenant.email', tenant.email)
+      // form.setValue('tenant.phone', tenant.phone)
     }
   }, [tenant, form])
 
   async function onSubmit(data: z.infer<typeof contractSchema>) {
     try {
-      console.log(data)
+      await createContract({
+        property_id: data.property.value,
+        tenant: {
+          id: tenant?.id || null,
+          name: data.tenant.name,
+          email: data.tenant.email,
+          phone: data.tenant.phone,
+          registration_code: data.tenant.registration_code,
+        },
+        start_date: data.start_date.toISOString(),
+        end_date: data.end_date.toISOString(),
+        monthly_rent: data.monthly_rent,
+        due_day: Number(data.due_day),
+        security_deposit: data.security_deposit,
+      })
+
+      toast({
+        title: 'Contrato criado com sucesso!',
+        description: 'O contrato foi criado com sucesso.',
+      })
+
+      router.push(`/contratos`)
     } catch (e) {
       console.log(e)
     }
@@ -139,12 +160,16 @@ export function CreateContract() {
                 placeholder="Selecione o imóvel..."
               />
 
+              <div className="mt-4 mb-4 font-bold">
+                Preencha as informações do locatário
+              </div>
+
               <CpfOrCnpjInput
                 name="tenant.registration_code"
                 label="Digite o CPF/CNPJ do locatário"
                 placeholder="cpf/cnpj"
                 className="mt-4 w-[240px]"
-                defaultValue={tenantRegistrationCode}
+                disabled={form.getValues('property.value') === ''}
               />
 
               {tenantRegistrationCode && !tenantIsLoading && (
@@ -158,10 +183,11 @@ export function CreateContract() {
                   <CardContent>
                     <CpfOrCnpjInput
                       disabled
-                      name="tenant.registration_code"
+                      name=""
                       label="CPF/CNPJ do locatário"
                       placeholder="cpf/cnpj"
                       className="w-[240px]"
+                      defaultValue={tenantRegistrationCode}
                     />
 
                     <FormField
@@ -224,7 +250,7 @@ export function CreateContract() {
                 </Card>
               )}
 
-              <div className="mt-8 mb-4 font-bold">
+              <div className="mt-4 mb-4 font-bold">
                 Insira as configurações do contrato
               </div>
 
@@ -269,7 +295,19 @@ export function CreateContract() {
                         <Input
                           placeholder="Digite o valor do aluguel mensal"
                           {...field}
-                          value={field.value ?? ''}
+                          value={
+                            field.value
+                              ? formatCurrency(
+                                  Number(field.value),
+                                  'pt-BR',
+                                  'BRL',
+                                )
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '')
+                            field.onChange(value ? parseFloat(value) / 100 : '')
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -288,6 +326,15 @@ export function CreateContract() {
                           placeholder="Digite o dia de vencimento"
                           {...field}
                           value={field.value ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '')
+                            if (
+                              value === '' ||
+                              (Number(value) > 0 && Number(value) <= 31)
+                            ) {
+                              field.onChange(value)
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -306,7 +353,19 @@ export function CreateContract() {
                       <Input
                         placeholder="Digite o valor do depósito de segurança"
                         {...field}
-                        value={field.value ?? ''}
+                        value={
+                          field.value
+                            ? formatCurrency(
+                                Number(field.value),
+                                'pt-BR',
+                                'BRL',
+                              )
+                            : ''
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '')
+                          field.onChange(value ? parseFloat(value) / 100 : '')
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -315,7 +374,9 @@ export function CreateContract() {
               />
 
               <div className="flex flex-1 justify-end mt-8">
-                <Button type="submit">Criar contrato</Button>
+                <Button disabled={!form.formState.isValid} type="submit">
+                  Criar contrato
+                </Button>
               </div>
             </CardContent>
           </Card>
