@@ -1,6 +1,7 @@
 'use server'
 import { httpClient } from '@/lib/api/api'
 import { APIResponse } from '@/models/model'
+import { Address } from '@/hooks/queries/proprieties/useProperties'
 
 export type CreateContractTenantDTO = {
   id: string | null
@@ -27,15 +28,20 @@ export type Contract = {
     id: string
     code: string
     type: string
+    address: Address
   }
   lessor: {
     id: string
     name: string
+    email?: string
+    phone?: string
     registration_code: string
   }
   tenant: {
     id: string
     name: string
+    email?: string
+    phone?: string
     registration_code: string
   }
   start_date: string
@@ -51,10 +57,13 @@ export type ListContractParams = {
   tenant_id?: string
 }
 
+export type GetContractParams = {
+  id: string
+}
+
 export const createContract = async (
   data: CreateContract,
 ): Promise<Contract> => {
-  console.log(data)
   const response = await httpClient.post<Contract>('/ws/contracts', data)
   return response.data
 }
@@ -68,6 +77,12 @@ export const getContracts = async (
       params,
     },
   )
-  console.log(response.data)
+  return response.data
+}
+
+export const getContract = async (
+  params: GetContractParams,
+): Promise<Contract> => {
+  const response = await httpClient.get<Contract>(`/ws/contracts/${params.id}`)
   return response.data
 }
