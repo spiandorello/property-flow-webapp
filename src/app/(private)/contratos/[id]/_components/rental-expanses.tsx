@@ -21,40 +21,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
 import { FormItem } from '@/components/ui/form'
+import { useCreateContractExpanse } from '@/hooks/queries/contracts/useContractExpanses'
+
+function formatCurrency(
+  value: number,
+  locale: string,
+  currency: string,
+): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
+    value,
+  )
+}
 
 const expenseSchema = z.object({
-  status: z.string(),
-  description: z.string(),
-  category: z.string(),
-  account: z.string(),
-  paymentMethod: z.string(),
-  amount: z.number().min(0),
+  description: z.string().min(2),
+  category: z.object({ id: z.string().min(1), name: z.string().min(1) }),
+  amount: z.number().min(0.01),
 })
 
-export function RentalExpanses() {
-  const { control, handleSubmit, reset } = useForm({
+export function RentalExpanses({ contractId }: { contractId: string }) {
+  const createExpanseMutation = useCreateContractExpanse(contractId)
+  const { control, handleSubmit, reset, formState } = useForm({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      status: '',
       description: '',
-      category: '',
-      account: '',
-      paymentMethod: '',
+      category: { id: '', name: '' },
       amount: 0,
     },
   })
 
   const onSubmit = (data: z.infer<typeof expenseSchema>) => {
-    console.log(data)
-    reset({
-      status: '',
-      description: '',
-      category: '',
-      account: '',
-      paymentMethod: '',
-      amount: 0,
-    })
+    createExpanseMutation.mutate(
+      {
+        ...data,
+        amount: data.amount * 100,
+        category_id: data.category.id,
+      },
+      {
+        onSuccess: () => {
+          reset()
+        },
+      },
+    )
   }
 
   return (
@@ -90,63 +100,24 @@ export function RentalExpanses() {
               control={control}
               render={({ field }) => (
                 <Select
-                  {...field}
-                  value={field.value}
-                  onValueChange={field.onChange}
+                  value={field.value.id}
+                  onValueChange={(value) =>
+                    field.onChange({ id: value, name: `Categoria ${value}` })
+                  }
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="categoria1">Categoria 1</SelectItem>
-                    <SelectItem value="categoria2">Categoria 2</SelectItem>
-                    <SelectItem value="categoria3">Categoria 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormItem>
-          <FormItem>
-            <Label htmlFor="account">Conta</Label>
-            <Controller
-              name="account"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger id="account">
-                    <SelectValue placeholder="Selecione a conta" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="meio1">Conta 1</SelectItem>
-                    <SelectItem value="meio2">Conta 2</SelectItem>
-                    <SelectItem value="meio3">Conta 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormItem>
-          <FormItem>
-            <Label htmlFor="paymentMethod">Meio de pagamento</Label>
-            <Controller
-              name="paymentMethod"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger id="paymentMethod">
-                    <SelectValue placeholder="Selecione um meio de pagamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="meio1">Meio 1</SelectItem>
-                    <SelectItem value="meio2">Meio 2</SelectItem>
-                    <SelectItem value="meio3">Meio 3</SelectItem>
+                    <SelectItem value="f218abb3-56ad-487d-acaa-b49464480809">
+                      Categoria 1
+                    </SelectItem>
+                    {/* <SelectItem value="f218abb3-56ad-487d-acaa-b49464480809"> */}
+                    {/*  Categoria 2 */}
+                    {/* </SelectItem> */}
+                    {/* <SelectItem value="f218abb3-56ad-487d-acaa-b49464480809"> */}
+                    {/*  Categoria 3 */}
+                    {/* </SelectItem> */}
                   </SelectContent>
                 </Select>
               )}
@@ -154,35 +125,32 @@ export function RentalExpanses() {
           </FormItem>
 
           <FormItem>
-            <Label htmlFor="amount">Valor</Label>
+            <Label htmlFor="amount">Valor pago</Label>
             <Controller
               name="amount"
               control={control}
               render={({ field }) => (
                 <Input
-                  id="amount"
-                  placeholder="Valor"
-                  value={field.value}
+                  placeholder="Digite o valor do pagamento"
+                  {...field}
+                  value={
+                    field.value
+                      ? formatCurrency(Number(field.value), 'pt-BR', 'BRL')
+                      : ''
+                  }
                   onChange={(e) => {
-                    field.onChange(e.target.value)
+                    const value = e.target.value.replace(/\D/g, '')
+                    field.onChange(value ? parseFloat(value) / 100 : '')
                   }}
                 />
               )}
             />
           </FormItem>
 
-          <FormItem>
-            <Label htmlFor="status">Status</Label>
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <Input id="status" placeholder="Status" {...field} />
-              )}
-            />
-          </FormItem>
           <DialogFooter>
-            <Button type="submit">Adicionar</Button>
+            <Button disabled={!formState.isValid} type="submit">
+              Adicionar
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

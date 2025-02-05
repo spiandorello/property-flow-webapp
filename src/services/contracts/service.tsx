@@ -61,6 +61,24 @@ export type GetContractParams = {
   id: string
 }
 
+export type ExpanseCategoryDTO = {
+  id: string
+  name: string
+}
+
+export type ContractExpanseDTO = {
+  id: string
+  amount: number
+  description: string
+  category: ExpanseCategoryDTO
+}
+
+export type CreateContractExpanseDTO = {
+  amount: number
+  description: string
+  category_id: string
+}
+
 export const createContract = async (
   data: CreateContract,
 ): Promise<Contract> => {
@@ -84,5 +102,25 @@ export const getContract = async (
   params: GetContractParams,
 ): Promise<Contract> => {
   const response = await httpClient.get<Contract>(`/ws/contracts/${params.id}`)
+  return response.data
+}
+
+export const listContractExpanses = async (
+  contractId: string,
+): Promise<APIResponse<ContractExpanseDTO[]>> => {
+  const response = await httpClient.get<APIResponse<ContractExpanseDTO[]>>(
+    `/ws/contracts/${contractId}/expanse`,
+  )
+  return response.data
+}
+
+export const createContractExpanse = async (
+  contractId: string,
+  data: CreateContractExpanseDTO,
+): Promise<ContractExpanseDTO> => {
+  const response = await httpClient.post<ContractExpanseDTO>(
+    `/ws/contracts/${contractId}/expanse`,
+    data,
+  )
   return response.data
 }

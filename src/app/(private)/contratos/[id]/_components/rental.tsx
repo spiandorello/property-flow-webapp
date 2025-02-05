@@ -15,56 +15,13 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { RentalExpanses } from '@/app/(private)/contratos/[id]/_components/rental-expanses'
-
-const invoices = [
-  {
-    invoice: 'INV001',
-    paymentStatus: 'Paid',
-    totalAmount: '$250.00',
-    paymentMethod: 'Credit Card',
-  },
-  {
-    invoice: 'INV002',
-    paymentStatus: 'Pending',
-    totalAmount: '$150.00',
-    paymentMethod: 'PayPal',
-  },
-  {
-    invoice: 'INV003',
-    paymentStatus: 'Unpaid',
-    totalAmount: '$350.00',
-    paymentMethod: 'Bank Transfer',
-  },
-  {
-    invoice: 'INV004',
-    paymentStatus: 'Paid',
-    totalAmount: '$450.00',
-    paymentMethod: 'Credit Card',
-  },
-  {
-    invoice: 'INV005',
-    paymentStatus: 'Paid',
-    totalAmount: '$550.00',
-    paymentMethod: 'PayPal',
-  },
-  {
-    invoice: 'INV006',
-    paymentStatus: 'Pending',
-    totalAmount: '$200.00',
-    paymentMethod: 'Bank Transfer',
-  },
-  {
-    invoice: 'INV007',
-    paymentStatus: 'Unpaid',
-    totalAmount: '$300.00',
-    paymentMethod: 'Credit Card',
-  },
-]
+import { useListContractExpanses } from '@/hooks/queries/contracts/useContractExpanses'
 
 export function Rental() {
   const { id } = useParams() as { id: string }
   const { setActions, setTitle } = useAppBar()
   const { data: contract } = useContract({ id })
+  const { data: expanses } = useListContractExpanses(id)
 
   useEffect(() => {
     setTitle('Contratos')
@@ -199,29 +156,29 @@ export function Rental() {
       <div className="mt-8">
         <div className="flex justify-between items-center align-middle">
           <h2 className="text-2xl font-medium">Despesas</h2>
-          <RentalExpanses />
+          <RentalExpanses contractId={contract.id} />
         </div>
 
         <Table className="mt-4">
           <TableHeader>
             <TableRow>
-              <TableHead>Status</TableHead>
+              {/* <TableHead>Status</TableHead> */}
               <TableHead>Descrição</TableHead>
               <TableHead>Categoria</TableHead>
-              <TableHead>Conta</TableHead>
-              <TableHead>Meio de pagamento</TableHead>
+              {/* <TableHead>Conta</TableHead> */}
+              {/* <TableHead>Meio de pagamento</TableHead> */}
               <TableHead>Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoices.map((invoice) => (
-              <TableRow key={invoice.invoice}>
-                <TableCell className="font-medium">{invoice.invoice}</TableCell>
-                <TableCell>{invoice.paymentStatus}</TableCell>
-                <TableCell>{invoice.paymentMethod}</TableCell>
-                <TableCell>{invoice.totalAmount}</TableCell>
-                <TableCell>{invoice.totalAmount}</TableCell>
-                <TableCell>{invoice.totalAmount}</TableCell>
+            {expanses?.data?.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.description}</TableCell>
+                <TableCell>{item.category.name}</TableCell>
+                <TableCell>{item.amount}</TableCell>
+                {/* <TableCell>{invoice.totalAmount}</TableCell> */}
+                {/* <TableCell>{invoice.totalAmount}</TableCell> */}
+                {/* <TableCell>{invoice.totalAmount}</TableCell> */}
               </TableRow>
             ))}
           </TableBody>

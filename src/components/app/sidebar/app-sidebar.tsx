@@ -1,4 +1,4 @@
-import { Home, Hotel, BookText, PersonStanding } from 'lucide-react'
+import { Hotel, BookText, PersonStanding } from 'lucide-react'
 import Link from 'next/link'
 
 import {
@@ -13,25 +13,25 @@ import {
 } from '@/components/ui/sidebar'
 
 const items = [
-  {
-    title: 'Home',
-    url: '/',
-    icon: Home,
-  },
+  // {
+  //   title: 'Home',
+  //   url: '/',
+  //   icon: Home,
+  // },
   {
     title: 'Imovéis',
     url: '/imoveis',
     icon: Hotel,
   },
   {
-    title: 'Locadores',
-    url: '/locadores',
-    icon: PersonStanding,
-  },
-  {
     title: 'Contratos',
     url: '/contratos',
     icon: BookText,
+  },
+  {
+    title: 'Locadores',
+    url: '/locadores',
+    icon: PersonStanding,
   },
 ]
 
@@ -40,7 +40,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Gerenciador de imovéis</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

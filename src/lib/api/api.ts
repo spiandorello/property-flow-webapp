@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import axios from 'axios'
 
 export const httpClient = axios.create({
-  baseURL: 'http://localhost:8081',
+  baseURL: 'http://18.188.96.58',
   timeout: 1000,
 })
 
